@@ -746,6 +746,337 @@ python-dotenv>=1.0.0
 websockets>=11.0
 ```
 
+---
+
+# PART 6B: TOOLS & TECHNOLOGIES USED (COMPLETE)
+
+## 6B.1 Backend Tools (Python)
+
+| Tool | Version | Purpose | Why Chosen |
+|------|---------|---------|------------|
+| **Python** | 3.10+ | Core language | Async support, rich ecosystem |
+| **FastAPI** | 0.100+ | Web framework | Fastest Python framework, WebSocket native |
+| **Uvicorn** | 0.22+ | ASGI server | High-performance async server |
+| **httpx** | 0.24+ | HTTP client | Async requests, modern API |
+| **feedparser** | 6.0+ | RSS parsing | Universal feed parser |
+| **python-dotenv** | 1.0+ | Environment vars | Secure API key management |
+| **websockets** | 11.0+ | WebSocket support | Real-time dashboard updates |
+
+### How Each Tool Works
+
+```python
+# FastAPI - Creates web server with automatic OpenAPI docs
+from fastapi import FastAPI, WebSocket
+app = FastAPI()
+
+@app.get("/")
+async def dashboard():
+    return HTMLResponse(DASHBOARD_HTML)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    # Send real-time updates to browser
+```
+
+```python
+# httpx - Async HTTP requests to APIs
+import httpx
+
+async with httpx.AsyncClient() as client:
+    response = await client.get(
+        "https://api.openweathermap.org/data/2.5/weather",
+        params={"id": "1174872", "appid": API_KEY}
+    )
+    data = response.json()
+```
+
+```python
+# feedparser - Parse RSS XML feeds
+import feedparser
+
+feed = feedparser.parse("https://dawn.com/feeds/home")
+for entry in feed.entries:
+    title = entry.title
+    link = entry.link
+    published = entry.published
+```
+
+```python
+# python-dotenv - Load API keys from .env file
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+```
+
+---
+
+## 6B.2 Frontend Tools (JavaScript/CSS)
+
+| Tool | Purpose | CDN Source |
+|------|---------|------------|
+| **Deck.gl** | WebGL map layers | unpkg.com/deck.gl |
+| **MapLibre GL** | Base map rendering | unpkg.com/maplibre-gl |
+| **Google Fonts** | Typography (Inter, JetBrains Mono) | fonts.googleapis.com |
+
+### How Frontend Tools Work
+
+```javascript
+// Deck.gl - Creates interactive map layers
+const deckgl = new deck.DeckGL({
+    container: 'map-container',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    initialViewState: {
+        longitude: 67.0011,  // Karachi center
+        latitude: 24.8607,
+        zoom: 11,
+        pitch: 45           // 3D tilt
+    },
+    controller: true
+});
+
+// Add incident markers as ScatterplotLayer
+const incidentLayer = new deck.ScatterplotLayer({
+    id: 'incidents',
+    data: incidents,
+    getPosition: d => [d.longitude, d.latitude],
+    getRadius: d => d.severity * 500,
+    getFillColor: d => getColorByType(d.type)
+});
+```
+
+```javascript
+// MapLibre GL - Renders base map tiles
+const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    center: [67.0011, 24.8607],
+    zoom: 11
+});
+
+// Toggle satellite view (FREE ESRI tiles)
+map.setStyle('https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+```
+
+```javascript
+// WebSocket - Real-time data updates
+const ws = new WebSocket('ws://localhost:8000/ws');
+
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    updateIncidents(data.incidents);
+    updateWeather(data.weather);
+    updateHealth(data.sources);
+};
+```
+
+---
+
+## 6B.3 Map & Visualization Tools
+
+| Tool | Type | Cost | Usage |
+|------|------|------|-------|
+| **CARTO Positron** | Base map tiles | FREE | Default street map |
+| **ESRI World Imagery** | Satellite tiles | FREE | Satellite toggle |
+| **Deck.gl ScatterplotLayer** | Point markers | FREE | Incident locations |
+| **Deck.gl PolygonLayer** | Area highlights | FREE | District boundaries |
+| **Deck.gl IconLayer** | Custom markers | FREE | Traffic hotspots |
+
+### Map Tile Sources (All FREE)
+
+```javascript
+// Street Map (CARTO Positron)
+'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+
+// Satellite Map (ESRI)
+'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+
+// Dark Mode Map (CARTO Dark Matter)
+'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+```
+
+---
+
+## 6B.4 External Services & APIs
+
+| Service | Type | Cost | Rate Limit | Purpose |
+|---------|------|------|------------|---------|
+| **OpenWeatherMap** | Weather API | FREE | 1000/day | Temperature, humidity, rain |
+| **Brave Search** | Search API | FREE | 2000/month | News & social search |
+| **Discord Webhooks** | Notification | FREE | 30/min | Instant alerts |
+| **Dawn News RSS** | News feed | FREE | Unlimited | Primary news source |
+| **Geo News RSS** | News feed | FREE | Unlimited | Secondary news |
+| **ARY News RSS** | News feed | FREE | Unlimited | Urdu news coverage |
+| **Express Tribune RSS** | News feed | FREE | Unlimited | English news |
+| **Samaa TV RSS** | News feed | FREE | Unlimited | Breaking news |
+
+### Service Connection Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    EXTERNAL SERVICES CONNECTED                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  WEATHER DATA                    NEWS FEEDS                         │
+│  ┌─────────────────┐            ┌─────────────────┐                │
+│  │ OpenWeatherMap  │            │ Dawn News       │                │
+│  │ api.openweather │            │ Geo News        │                │
+│  │ map.org         │            │ ARY News        │                │
+│  └────────┬────────┘            │ Express Tribune │                │
+│           │                     │ Samaa TV        │                │
+│           │                     └────────┬────────┘                │
+│           │                              │                          │
+│           ▼                              ▼                          │
+│  ┌─────────────────────────────────────────────────────┐           │
+│  │              SENTINEL-K ENGINE                       │           │
+│  └─────────────────────────────────────────────────────┘           │
+│           │                              │                          │
+│           ▼                              ▼                          │
+│  ┌─────────────────┐            ┌─────────────────┐                │
+│  │ Brave Search    │            │ Discord         │                │
+│  │ api.search.     │            │ Webhooks        │                │
+│  │ brave.com       │            │                 │                │
+│  └─────────────────┘            └─────────────────┘                │
+│                                                                      │
+│  MAP TILES                                                          │
+│  ┌─────────────────┐  ┌─────────────────┐                          │
+│  │ CARTO           │  │ ESRI            │                          │
+│  │ (Street Map)    │  │ (Satellite)     │                          │
+│  └─────────────────┘  └─────────────────┘                          │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6B.5 Database Tools
+
+| Tool | Purpose | Location |
+|------|---------|----------|
+| **SQLite** | Incident persistence | `Sentinel_Vault/sentinel_k.db` |
+| **JSON Files** | Incident snapshots | `Sentinel_Vault/incidents/` |
+| **JSON Config** | Dashboard data | `Sentinel_Vault/config/` |
+
+### Database Schema
+
+```sql
+-- SQLite Table: incidents
+CREATE TABLE incidents (
+    id TEXT PRIMARY KEY,
+    incident_type TEXT NOT NULL,
+    location TEXT NOT NULL,
+    headline TEXT,
+    confidence_score REAL,
+    confidence_level TEXT,
+    source_count INTEGER,
+    created_at TIMESTAMP,
+    resolved_at TIMESTAMP,
+    status TEXT DEFAULT 'active',
+    false_positive BOOLEAN DEFAULT FALSE
+);
+
+-- SQLite Table: sources
+CREATE TABLE sources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id TEXT,
+    source_type TEXT,
+    content TEXT,
+    url TEXT,
+    timestamp TIMESTAMP,
+    FOREIGN KEY (incident_id) REFERENCES incidents(id)
+);
+```
+
+---
+
+## 6B.6 Development Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| **VS Code** | Code editor |
+| **Git** | Version control |
+| **GitHub** | Repository hosting |
+| **Claude Code** | AI pair programming |
+| **Python venv** | Virtual environment |
+| **pip** | Package management |
+
+### Development Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEVELOPMENT WORKFLOW                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. PLAN          2. CODE           3. TEST          4. DEPLOY  │
+│  ┌─────────┐     ┌─────────┐      ┌─────────┐      ┌─────────┐ │
+│  │ Claude  │────▶│ VS Code │─────▶│ Local   │─────▶│ GitHub  │ │
+│  │ Code    │     │ Python  │      │ Testing │      │ Push    │ │
+│  └─────────┘     └─────────┘      └─────────┘      └─────────┘ │
+│       │                                                   │      │
+│       │              ┌─────────────────┐                 │      │
+│       └─────────────▶│  Git Commits    │◀────────────────┘      │
+│                      │  Version Control│                        │
+│                      └─────────────────┘                        │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6B.7 File Format Tools
+
+| Format | Tool | Usage |
+|--------|------|-------|
+| **JSON** | Built-in `json` | API responses, config files |
+| **XML** | `feedparser` | RSS feed parsing |
+| **Markdown** | Obsidian | Mission control dashboard |
+| **HTML** | Embedded in Python | Web dashboard |
+| **SQLite** | `sqlite3` | Database storage |
+
+---
+
+## 6B.8 Complete Tool Stack Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SENTINEL-K TOOL STACK                             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  LAYER 1: FRONTEND (Browser)                                        │
+│  ├── Deck.gl (WebGL maps)                                           │
+│  ├── MapLibre GL (map rendering)                                    │
+│  ├── WebSocket API (real-time)                                      │
+│  └── Vanilla JavaScript (no framework)                              │
+│                                                                      │
+│  LAYER 2: BACKEND (Python)                                          │
+│  ├── FastAPI (web framework)                                        │
+│  ├── Uvicorn (ASGI server)                                          │
+│  ├── httpx (HTTP client)                                            │
+│  ├── feedparser (RSS parsing)                                       │
+│  └── python-dotenv (config)                                         │
+│                                                                      │
+│  LAYER 3: DATA SOURCES (External APIs)                              │
+│  ├── OpenWeatherMap (weather)                                       │
+│  ├── Brave Search (news search)                                     │
+│  ├── RSS Feeds (5 news sources)                                     │
+│  └── Discord Webhooks (notifications)                               │
+│                                                                      │
+│  LAYER 4: STORAGE (Local)                                           │
+│  ├── SQLite (incidents database)                                    │
+│  ├── JSON files (snapshots)                                         │
+│  └── Markdown (Obsidian sync)                                       │
+│                                                                      │
+│  LAYER 5: MAP SERVICES (Free Tiles)                                 │
+│  ├── CARTO Positron (street map)                                    │
+│  └── ESRI World Imagery (satellite)                                 │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 6.3 Data Models
 
 ### Source Model
@@ -1051,7 +1382,9 @@ sqlite3 Sentinel_Vault/sentinel_k.db "SELECT * FROM incidents LIMIT 10;"
 | **Confidence Score** | 0-100% reliability rating |
 | **Cooldown** | 30-min pause after false positive |
 | **Roman Urdu** | Urdu written in Latin script |
-| **MCP** | Model Context Protocol (Claude tools) |
+| **WebSocket** | Protocol for real-time browser communication |
+| **ASGI** | Async Server Gateway Interface (Python web standard) |
+| **CDN** | Content Delivery Network (for JS libraries) |
 
 ---
 
