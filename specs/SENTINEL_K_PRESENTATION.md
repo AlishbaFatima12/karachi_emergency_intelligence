@@ -254,6 +254,367 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/xxx
 
 ---
 
+# PART 4B: HOW APIs CONNECT & WORK (DETAILED)
+
+## 4B.1 OpenWeatherMap API (Weather Data)
+
+### Connection Flow
+```
+┌─────────────────┐         HTTPS GET          ┌─────────────────────┐
+│  Sentinel-K     │ ──────────────────────────▶│  OpenWeatherMap     │
+│  weather_watcher│                            │  api.openweathermap │
+└─────────────────┘◀────────────────────────── └─────────────────────┘
+                         JSON Response
+```
+
+### How It Works
+```python
+# Request URL sent every 15 minutes
+GET https://api.openweathermap.org/data/2.5/weather?id=1174872&appid=YOUR_KEY
+
+# 1174872 = Karachi city ID (fixed)
+# appid = Your API key from .env
+```
+
+### Response Received
+```json
+{
+  "main": {
+    "temp": 291.9,      // Temperature in Kelvin (converted to Celsius)
+    "humidity": 72      // Humidity percentage
+  },
+  "wind": {
+    "speed": 2.06       // Wind speed in m/s (converted to km/h)
+  },
+  "rain": {
+    "1h": 0             // Rain in last hour (mm) - triggers monsoon mode
+  },
+  "weather": [
+    {"description": "smoke"}  // Current weather condition
+  ]
+}
+```
+
+### Used For
+- Dashboard weather panel display
+- Monsoon mode trigger (rain > 5mm)
+- Heatwave mode trigger (temp > 40°C)
+- Weather-related incident correlation
+
+---
+
+## 4B.2 Brave Search API (Social/News Search)
+
+### Connection Flow
+```
+┌─────────────────┐         HTTPS GET          ┌─────────────────────┐
+│  Sentinel-K     │ ──────────────────────────▶│  Brave Search API   │
+│  social_watcher │                            │  api.search.brave   │
+└─────────────────┘◀────────────────────────── └─────────────────────┘
+                         JSON Response
+```
+
+### How It Works
+```python
+# Multiple search queries sent every 5 minutes
+GET https://api.search.brave.com/res/v1/web/search?q=Karachi+fire+breaking&count=10&freshness=pd
+
+# Headers required:
+# X-Subscription-Token: YOUR_BRAVE_API_KEY
+
+# Parameters:
+# q = Search query (different queries for different incidents)
+# count = Number of results (10)
+# freshness = pd (Past Day only - ensures fresh news)
+```
+
+### Search Queries Sent (20+ queries per cycle)
+```
+ENGLISH QUERIES:
+1. "Karachi fire breaking news"
+2. "Karachi blast breaking"
+3. "Karachi accident breaking"
+4. "Karachi shooting breaking"
+5. "Karachi robbery today"
+6. "Karachi flood rain"
+7. "Karachi power outage"
+
+NEWS CHANNEL SPECIFIC:
+8. "Geo News Karachi fire"
+9. "ARY News Karachi accident"
+10. "Samaa Karachi breaking"
+11. "Dawn Karachi emergency"
+12. "Express Tribune Karachi incident"
+
+ROMAN URDU QUERIES:
+13. "Karachi aag lagi today"       (fire)
+14. "Karachi dhamaaka aaj"         (blast)
+15. "Karachi firing aaj"           (shooting)
+16. "Karachi hadsa aaj"            (accident)
+17. "Karachi loot maar"            (robbery)
+
+LOCATION SPECIFIC:
+18. "Shahrah-e-Faisal accident"
+19. "Karachi traffic jam now"
+20. "Karachi road block today"
+```
+
+### Response Received
+```json
+{
+  "web": {
+    "results": [
+      {
+        "title": "Gul Plaza fire death toll rises to 30",
+        "url": "https://dawn.com/news/1234567",
+        "description": "Rescue workers continue search for survivors...",
+        "age": "2 hours ago"
+      },
+      {
+        "title": "Multiple fire incidents reported in Karachi",
+        "url": "https://geo.tv/news/...",
+        "description": "Fire brigade responded to several calls..."
+      }
+    ]
+  }
+}
+```
+
+### Used For
+- Real-time news detection (faster than RSS)
+- Social media signal monitoring
+- Multi-source correlation
+- Breaking news alerts
+
+---
+
+## 4B.3 Discord Webhooks (Notifications)
+
+### Connection Flow
+```
+┌─────────────────┐         HTTPS POST         ┌─────────────────────┐
+│  Sentinel-K     │ ──────────────────────────▶│  Discord Server     │
+│  discord_bot    │                            │  Your Channel       │
+└─────────────────┘                            └─────────────────────┘
+                    (One-way, no response needed)
+```
+
+### How It Works
+```python
+# Webhook URL from Discord channel settings
+POST https://discord.com/api/webhooks/{webhook_id}/{webhook_token}
+
+# Content-Type: application/json
+```
+
+### Heartbeat Message (Every 5 Minutes)
+```json
+{
+  "embeds": [{
+    "title": "🛡️ SENTINEL-K STATUS",
+    "color": 3066993,
+    "fields": [
+      {"name": "Status", "value": "✅ All clear", "inline": true},
+      {"name": "Weather", "value": "🌡️ 18.9°C", "inline": true},
+      {"name": "Humidity", "value": "💧 72%", "inline": true},
+      {"name": "Active Alerts", "value": "0", "inline": true}
+    ],
+    "footer": {"text": "21:30 PKT | Sentinel-K v1.0"}
+  }]
+}
+```
+
+### Alert Message (On Incident Detection)
+```json
+{
+  "embeds": [{
+    "title": "🔥 FIRE ALERT",
+    "description": "**Gul Plaza fire death toll rises to 30...**",
+    "color": 16711680,
+    "fields": [
+      {"name": "📍 Location", "value": "SITE Area", "inline": true},
+      {"name": "📊 Confidence", "value": "🔴 HIGH (95%)", "inline": true},
+      {"name": "📰 Sources", "value": "5 corroborating", "inline": true},
+      {"name": "🕐 Time", "value": "20:53 PKT", "inline": true}
+    ],
+    "footer": {"text": "⚠️ VERIFY with official sources | Police 15 | Rescue 1122"}
+  }]
+}
+```
+
+### Message Types
+| Type | Frequency | Trigger |
+|------|-----------|---------|
+| Heartbeat | Every 5 min | Timer |
+| Alert | On incident | Confidence >= 70% |
+| Status Change | On mode change | Monsoon/Heatwave |
+
+---
+
+## 4B.4 RSS Feeds (Direct HTTP)
+
+### Connection Flow
+```
+┌─────────────────┐         HTTP GET           ┌─────────────────────┐
+│  Sentinel-K     │ ──────────────────────────▶│  News Websites      │
+│  rss_watcher    │                            │  (Dawn, Geo, ARY)   │
+└─────────────────┘◀────────────────────────── └─────────────────────┘
+                         XML Response
+```
+
+### How It Works
+```python
+# Direct HTTP GET to RSS feed URLs (no API key needed)
+GET https://www.dawn.com/feeds/home
+GET https://tribune.com.pk/feed/home
+GET https://arynews.tv/feed/
+GET https://www.geo.tv/rss/1/1
+GET https://www.samaa.tv/feed/
+
+# Uses feedparser library to parse XML
+```
+
+### XML Response Parsed
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Dawn News</title>
+    <item>
+      <title>Fire at Gul Plaza claims 30 lives</title>
+      <link>https://dawn.com/news/1234567</link>
+      <pubDate>Tue, 21 Jan 2026 20:00:00 +0500</pubDate>
+      <description>A devastating fire broke out at Gul Plaza
+        shopping center in SITE area...</description>
+    </item>
+    <item>
+      <title>Rain expected in Karachi tomorrow</title>
+      <link>https://dawn.com/news/1234568</link>
+      ...
+    </item>
+  </channel>
+</rss>
+```
+
+### Used For
+- Primary news source (most reliable)
+- Headline extraction
+- Publication time tracking
+- Source verification
+
+---
+
+## 4B.5 Complete Data Flow
+
+```
+         ┌──────────────────┐
+         │    RSS FEEDS     │───────┐
+         │  (5 news sites)  │       │
+         │  Poll: 5 min     │       │
+         └──────────────────┘       │
+                                    │
+         ┌──────────────────┐       │      ┌─────────────────────┐
+         │  BRAVE SEARCH    │───────┼─────▶│   CORRELATION       │
+         │  (20+ queries)   │       │      │   ENGINE            │
+         │  Poll: 5 min     │       │      │                     │
+         └──────────────────┘       │      │  1. Deduplicate     │
+                                    │      │  2. Filter blocked  │
+         ┌──────────────────┐       │      │  3. Extract location│
+         │  OPENWEATHERMAP  │───────┘      │  4. Calculate score │
+         │  (Karachi only)  │              │  5. Classify type   │
+         │  Poll: 15 min    │              └──────────┬──────────┘
+         └──────────────────┘                         │
+                                                      │
+                          ┌───────────────────────────┼───────────────────────────┐
+                          │                           │                           │
+                          ▼                           ▼                           ▼
+                   ┌────────────┐             ┌────────────┐             ┌────────────┐
+                   │ DASHBOARD  │             │  DISCORD   │             │  DATABASE  │
+                   │ WebSocket  │             │  Webhook   │             │  SQLite    │
+                   │ Port 8000  │             │  Instant   │             │  Persist   │
+                   └────────────┘             └────────────┘             └────────────┘
+                         │                          │                          │
+                         ▼                          ▼                          ▼
+                   ┌────────────┐             ┌────────────┐             ┌────────────┐
+                   │  Browser   │             │  Discord   │             │ JSON Files │
+                   │  Map View  │             │  Channel   │             │ incidents/ │
+                   └────────────┘             └────────────┘             └────────────┘
+```
+
+---
+
+## 4B.6 API Rate Limits & Usage
+
+| API | Free Tier Limit | Our Usage | Safety Margin |
+|-----|-----------------|-----------|---------------|
+| OpenWeatherMap | 1,000 calls/day | ~96/day (every 15 min) | 90% margin |
+| Brave Search | 2,000 queries/month | ~600/day (aggressive) | May hit limit |
+| Discord Webhook | 30 messages/min | ~12/hour max | 98% margin |
+| RSS Feeds | Unlimited | Every 5 min | No limit |
+
+### Rate Limit Handling
+```python
+# If Brave API rate limited:
+try:
+    response = await client.get(brave_url, headers=headers)
+except RateLimitError:
+    logger.warning("Brave API rate limited, skipping this cycle")
+    return []  # Graceful degradation - RSS still works
+```
+
+---
+
+## 4B.7 Authentication Summary
+
+```python
+# .env file configuration:
+
+# OpenWeatherMap - Passed as URL parameter
+OPENWEATHERMAP_API_KEY=db33abc58f336f972baa0287ebcdf777
+# Usage: ?appid={OPENWEATHERMAP_API_KEY}
+
+# Brave Search - Passed as HTTP header
+BRAVE_API_KEY=BSAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Usage: X-Subscription-Token: {BRAVE_API_KEY}
+
+# Discord - Full URL with embedded token
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/123456/abcdef...
+# Usage: POST directly to this URL
+
+# RSS Feeds - No authentication required
+# Direct HTTP GET to public URLs
+```
+
+---
+
+## 4B.8 Error Handling
+
+| Error Type | API | Handling |
+|------------|-----|----------|
+| Network timeout | All | Retry 3x with backoff |
+| Invalid API key | Weather/Brave | Log error, skip cycle |
+| Rate limited | Brave | Skip cycle, rely on RSS |
+| SSL error | RSS (Samaa) | Skip that feed only |
+| 404 Not Found | RSS | Remove from feed list |
+| Discord failure | Discord | Queue message for retry |
+
+```python
+# Example error handling:
+async def poll_weather(self):
+    try:
+        response = await self.client.get(self.weather_url)
+        response.raise_for_status()
+        return response.json()
+    except httpx.TimeoutException:
+        logger.warning("Weather API timeout, using cached data")
+        return self.cached_weather
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Weather API error: {e.response.status_code}")
+        return self.cached_weather
+```
+
+---
+
 # PART 5: CORE FEATURES
 
 ## 5.1 Multi-Source Correlation (The Brain)
