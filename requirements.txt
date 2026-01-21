@@ -1,0 +1,37 @@
+# Sentinel-K Dependencies
+# Python 3.11+ recommended
+
+# === CORE ===
+httpx>=0.25.0              # HTTP client
+feedparser>=6.0.10         # RSS parsing
+pydantic>=2.0.0            # Data validation
+python-dotenv>=1.0.0       # Environment variables
+
+# === WEB DASHBOARD ===
+fastapi>=0.104.0           # Web framework
+uvicorn>=0.24.0            # ASGI server
+websockets>=12.0           # WebSocket support
+
+# === SCHEDULING ===
+schedule>=1.2.0            # Task scheduling
+apscheduler>=3.10.0        # Advanced scheduling
+
+# === CLI & OUTPUT ===
+rich>=13.0.0               # Rich CLI output
+typer>=0.9.0               # CLI framework
+
+# === DATABASE ===
+# SQLite is built-in, no extra package needed
+
+# === TESTING ===
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# === DEVELOPMENT ===
+black>=23.0.0
+ruff>=0.1.0
+
+# === OPTIONAL: NOTIFICATIONS ===
+# Uncomment if using Telegram
+# python-telegram-bot>=20.0

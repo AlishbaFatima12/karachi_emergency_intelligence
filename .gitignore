@@ -1,0 +1,110 @@
+# ═══════════════════════════════════════════════════════════════════
+# SENTINEL-K .gitignore
+# ═══════════════════════════════════════════════════════════════════
+
+# === API KEYS & SECRETS (CRITICAL - NEVER COMMIT) ===
+.env
+*.env
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+api_keys.txt
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# === Virtual Environment ===
+venv/
+ENV/
+env/
+.venv/
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# === OS Files ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# === Logs & Database (Generated at runtime) ===
+*.log
+*.sqlite
+*.db
+Sentinel_Vault/incidents/
+Sentinel_Vault/logs/
+Sentinel_Vault/audit/
+Sentinel_Vault/*.db
+src/Sentinel_Vault/
+
+# === Temporary Files ===
+*.tmp
+*.temp
+*.bak
+*.cache
+nul
+
+# === Test/Debug Files ===
+dashboard_html.txt
+test_*.py
+debug_*.py
+
+# === Images & Screenshots (unless needed) ===
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+e1.jpeg
+p1.PNG
+p2.PNG
+
+# === Config files with secrets ===
+claude_desktop_config.json
+
+# === History/PHR files (project-specific) ===
+history/
+
+# === Obsidian (local notes) ===
+obsidian/
+
+# === Specify templates (internal tooling) ===
+.specify/scripts/
+.specify/templates/
+
+# === Keep these folders but ignore contents ===
+!Sentinel_Vault/.gitkeep
+!Sentinel_Vault/config/.gitkeep
